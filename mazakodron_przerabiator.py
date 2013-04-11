@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """
+Mazakodron 3000 - Przerabiator 5000
+
+Based on:
 synfig_prepare.py
 Simplifies SVG files in preparation for sif export.
 
@@ -20,8 +23,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 """
 
+from __future__ import print_function
 import sys
-sys.path.append('/usr/share/inkscape/extensions')
 import os, tempfile
 
 import inkex
@@ -39,7 +42,7 @@ class MalformedSVGError(Exception):
 
 Error message: %s
 
-The SVG to Synfig converter is designed to handle SVG files that were created using Inkscape. Unsupported features are most likely to occur in SVG files written by other programs.
+Przerabiator 5000 is designed to handle SVG files that were created using Inkscape. Unsupported features are most likely to occur in SVG files written by other programs.
 """     % repr(self.value)
 
 try:
@@ -56,6 +59,8 @@ class InkscapeActionGroup(object):
         self.has_selection = False
         self.has_action = False
         self.svg_document = svg_document
+        
+        self.tmp = 0
 
     def set_svg_document(self, svg_document):
         """Set the SVG document that Inkscape will operate on"""
@@ -118,6 +123,12 @@ class InkscapeActionGroup(object):
         nodes = self.svg_document.xpath(xpath, namespaces=namespaces)
 
         self.select_nodes(nodes)
+        
+    def count_nodes(self, xpath, namespaces=NSS):
+        """Counts how many nodes match given XPath expression"""
+        
+        nodes = self.svg_document.xpath(xpath, namespaces=namespaces)
+	return len(nodes)
 
     def deselect(self):
         """Deselect all objects"""
@@ -172,13 +183,15 @@ class InkscapeActionGroup(object):
         # Return the new document
         return new_svg_doc
 
-class SynfigExportActionGroup(InkscapeActionGroup):
-    """An action group with stock commands designed for Synfig exporting"""
+class MazakodronExportActionGroup(InkscapeActionGroup):
+    """An action group with stock commands designed for MZKDRN exporting"""
     def __init__(self, svg_document=None):
         InkscapeActionGroup.__init__(self, svg_document)
         self.set_init_args("--verb=UnlockAllInAllLayers")
-        self.objects_to_paths()
+        #self.objects_to_paths()
+        self.ungroup()
         self.unlink_clones()
+        self.objects_to_paths()
 
     def objects_to_paths(self):
         """Convert unsupported objects to paths"""
@@ -195,7 +208,8 @@ class SynfigExportActionGroup(InkscapeActionGroup):
             "svg:line",
             "svg:polyline",
             "svg:polygon",
-            "svg:text"
+            "svg:text",
+            "svg:path" # convert arcs too
             ]
 
         # Build an xpath command to select these nodes
@@ -208,6 +222,16 @@ class SynfigExportActionGroup(InkscapeActionGroup):
         # Convert them to paths
         self.verb("ObjectToPath")
         self.deselect()
+
+    def ungroup(self):
+        """Ungroup elements (remove <svg:g> elements)"""
+        groups = self.count_nodes("//svg:g", namespaces=NSS)
+	for i in range(0, groups):
+	  self.select_xpath("//svg:g", namespaces=NSS)
+	  self.verb("SelectionUnGroup")
+	  self.deselect()
+        
+        #print(dir(self.select_xpath("//svg:g", namespaces=NSS)), file=sys.stderr);
 
     def unlink_clones(self):
         """Unlink clones (remove <svg:use> elements)"""
@@ -447,20 +471,20 @@ def propagate_attribs(node, parent_style={}, parent_transform=[[1.0, 0.0, 0.0], 
         or node.tag == addNS("g", "svg")
         or node.tag == addNS("a", "svg")
         or node.tag == addNS("switch", "svg")):
-        # Leave only non-propagating style attributes
-        if len(remaining_style) == 0:
-            if "style" in node.keys():
-                del node.attrib["style"]
-        else:
-            node.set("style", simplestyle.formatStyle(remaining_style))
+      # Leave only non-propagating style attributes
+	if len(remaining_style) == 0:
+	    if "style" in node.keys():
+		del node.attrib["style"]
+	else:
+	    node.set("style", simplestyle.formatStyle(remaining_style))
 
-        # Remove the transform attribute
-        if "transform" in node.keys():
-            del node.attrib["transform"]
+	# Remove the transform attribute
+	if "transform" in node.keys():
+	    del node.attrib["transform"]
 
-        # Continue propagating on subelements
-        for c in node.iterchildren():
-            propagate_attribs(c, this_style, this_transform)
+	# Continue propagating on subelements
+	for c in node.iterchildren():
+	    propagate_attribs(c, this_style, this_transform)
     else:
         # This element is not a container
 
@@ -504,11 +528,11 @@ def get_dimension(s="1024"):
         return 1024
 
 ###### Main Class #########################################
-class SynfigPrep(inkex.Effect):
+class MazakodronPrep(inkex.Effect):
     def effect(self):
-        """Transform document in preparation for exporting it into the Synfig format"""
+        """Transform document in preparation for exporting it into the MZKDRN format"""
 
-        a = SynfigExportActionGroup(self.document)
+        a = MazakodronExportActionGroup(self.document)
         self.document = a.run_document()
 
         # Remove inheritance of attributes
@@ -530,7 +554,7 @@ class SynfigPrep(inkex.Effect):
 
 if __name__ == '__main__':
     try:
-        e = SynfigPrep()
+        e = MazakodronPrep()
         e.affect()
     except MalformedSVGError, e:
         errormsg(e)
