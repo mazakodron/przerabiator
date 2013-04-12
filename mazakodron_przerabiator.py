@@ -195,10 +195,9 @@ class MazakodronExportActionGroup(InkscapeActionGroup):
     def __init__(self, svg_document=None):
         InkscapeActionGroup.__init__(self, svg_document)
         self.set_init_args("--verb=UnlockAllInAllLayers")
-        #self.objects_to_paths()
+        self.objects_to_paths()
         self.ungroup()
         self.unlink_clones()
-        self.objects_to_paths()
 
     def objects_to_paths(self):
         """Convert unsupported objects to paths"""
@@ -501,6 +500,9 @@ def propagate_attribs(node, parent_style={}, parent_transform=[[1.0, 0.0, 0.0], 
         # Set the element's style and transform attribs
         node.set("style", simplestyle.formatStyle(this_style))
         node.set("transform", simpletransform.formatTransform(this_transform))
+
+    if node.get('d')!=None:
+      simpletransform.fuseTransform(node)
 
 ### Style related
 
