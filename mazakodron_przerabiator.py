@@ -312,7 +312,7 @@ def split_fill_and_stroke(path_node):
             if not key.startswith("fill") and not key.startswith("filter"):
               style_stroke[key] = style[key]
           style_stroke['stroke']='#000000';
-          style_stroke['stroke-width']='10px';
+          style_stroke['stroke-width']='5px';
           style_stroke['opacity']='1';
           
           #inkex.errormsg(style_stroke)
@@ -326,7 +326,7 @@ def split_fill_and_stroke(path_node):
           if not key.startswith("fill") and not key.startswith("filter"):
             style_stroke[key] = style[key]
         style_stroke['stroke']='#000000';
-        style_stroke['stroke-width']='10px';
+        style_stroke['stroke-width']='5px';
         style_stroke['opacity']='1';
         #inkex.errormsg(style_stroke)
 
@@ -393,7 +393,7 @@ def split_fill_and_stroke(path_node):
             style_stroke[key] = style[key]
 
     style_stroke['stroke'] = '#000000';
-    style_stroke['stroke-width']='10px';
+    style_stroke['stroke-width']='5px';
     style_stroke['opacity']='1';
     
     if len(style_group) != 0:
