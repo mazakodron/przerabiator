@@ -27,7 +27,14 @@ from __future__ import print_function
 import sys
 import os, tempfile
 
-import inkex
+try:
+  import inkex
+except ImportError:
+  sys.path += ['/usr/share/inkscape/extensions']
+  sys.path += ['/usr/local/share/inkscape/extensions']
+  sys.path += ['C:\\Program Files\\Inkscape\\share\\extensions']
+  import inkex
+
 from inkex import NSS, addNS, etree, errormsg
 import simplepath, simplestyle, simpletransform
 
